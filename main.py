@@ -49,9 +49,9 @@ def plot_real_time_temperatures(file_path):
     time_points = []
     temp_0_points, temp_1_points, temp_2_points = [], [], []
 
-    # Placeholder for the plot and metrics
+    # Placeholder for the plot and columns for temperature display
     plot_placeholder = st.empty()
-    temp_display_placeholder = st.container()
+    col1, col2, col3 = st.columns(3)
 
     # Real-time plotting loop
     for index, row in data.iterrows():
@@ -90,11 +90,18 @@ def plot_real_time_temperatures(file_path):
         plot_placeholder.pyplot(plt)
         plt.close()
 
-        # Update temperature metrics in Streamlit
-        with temp_display_placeholder:
-            st.metric(label="Temperature_0", value=f"{temp_0:.2f} °C")
-            st.metric(label="Temperature_1", value=f"{temp_1:.2f} °C")
-            st.metric(label="Temperature_2", value=f"{temp_2:.2f} °C")
+        # Update temperature metrics in columns
+        with col1:
+            st.markdown("### Temperature_0")
+            st.metric(label="", value=f"{temp_0:.2f} °C")
+        
+        with col2:
+            st.markdown("### Temperature_1")
+            st.metric(label="", value=f"{temp_1:.2f} °C")
+        
+        with col3:
+            st.markdown("### Temperature_2")
+            st.metric(label="", value=f"{temp_2:.2f} °C")
 
         # Wait for 1 second to simulate real-time updates
         time.sleep(1)
