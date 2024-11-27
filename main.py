@@ -34,7 +34,7 @@ def load_data(file_path):
 
     return data
 
-# Streamlit app for plotting and displaying current temperatures
+# Streamlit app for plotting and displaying temperatures in tabs
 def plot_real_time_temperatures(file_path):
     st.title("Real-Time Temperature Monitoring")
     st.write(f"Reading temperature data from: `{file_path}`")
@@ -43,11 +43,15 @@ def plot_real_time_temperatures(file_path):
     data = load_data(file_path)
     data["X_Value"] = data["X_Value"].cumsum()  # Ensure X_Value increments by 1 second
 
+    # Initialize variables
+    time_points = []
+    temp_0_points, temp_1_points, temp_2_points = [], [], []
+
     # Placeholder for the plot
     plot_placeholder = st.empty()
 
-    # Create three columns for displaying temperatures
-    col1, col2, col3 = st.columns(3)
+    # Create tabs for displaying temperatures
+    tab1, tab2, tab3 = st.tabs(["Temperature_0", "Temperature_1", "Temperature_2"])
 
     # Real-time plotting loop
     for index, row in data.iterrows():
@@ -55,32 +59,36 @@ def plot_real_time_temperatures(file_path):
         current_time = row["X_Value"]
         temp_0, temp_1, temp_2 = row["Temperature_0"], row["Temperature_1"], row["Temperature_2"]
 
+        # Add points for plotting
+        time_points.append(current_time)
+        temp_0_points.append(temp_0)
+        temp_1_points.append(temp_1)
+        temp_2_points.append(temp_2)
+
         # Create the plot
-        plt.figure(figsize=(8, 4))  # Smaller, minimal size
-        plt.plot(data["X_Value"][:index+1], data["Temperature_0"][:index+1], label="Temperature_0", color="red", linewidth=1.5)
-        plt.plot(data["X_Value"][:index+1], data["Temperature_1"][:index+1], label="Temperature_1", color="blue", linewidth=1.5)
-        plt.plot(data["X_Value"][:index+1], data["Temperature_2"][:index+1], label="Temperature_2", color="green", linewidth=1.5)
+        plt.figure(figsize=(10, 6))
+        plt.plot(time_points, temp_0_points, label="Temperature_0", color="red")
+        plt.plot(time_points, temp_1_points, label="Temperature_1", color="blue")
+        plt.plot(time_points, temp_2_points, label="Temperature_2", color="green")
 
-        # Add minimal plot details
-        plt.title("Temperature Trends", fontsize=14, fontweight='bold', loc='left', pad=10)
-        plt.xlabel("Time (seconds)", fontsize=12)
-        plt.ylabel("Temperature (°C)", fontsize=12)
-        plt.legend(frameon=False, fontsize=10, loc="upper left")
-        plt.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.6)
-        plt.tight_layout()  # Adjust layout to remove excess space
-
-        # Hide top and right spines
-        plt.gca().spines["top"].set_visible(False)
-        plt.gca().spines["right"].set_visible(False)
+        # Add plot details
+        plt.title("Real-Time Temperature Plot")
+        plt.xlabel("Time (seconds)")
+        plt.ylabel("Temperature (°C)")
+        plt.legend()
+        plt.grid()
 
         # Render the plot in Streamlit
         plot_placeholder.pyplot(plt)
         plt.close()
 
-        # Update current temperatures in the three columns
-        col1.metric("Temperature_0", f"{temp_0:.2f} °C")
-        col2.metric("Temperature_1", f"{temp_1:.2f} °C")
-        col3.metric("Temperature_2", f"{temp_2:.2f} °C")
+        # Update temperature metrics in tabs
+        with tab1:
+            st.metric("Current Value", f"{temp_0:.2f} °C")
+        with tab2:
+            st.metric("Current Value", f"{temp_1:.2f} °C")
+        with tab3:
+            st.metric("Current Value", f"{temp_2:.2f} °C")
 
         # Wait for 1 second to simulate real-time updates
         time.sleep(1)
