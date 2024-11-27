@@ -84,11 +84,11 @@ def plot_real_time_temperatures(file_path):
 
         # Update temperature metrics in tabs
         with tab1:
-            st.write(f"### Current Temperature: {temp_0:.2f} °C")
+            st.metric("Current Value", f"{temp_0:.2f} °C")
         with tab2:
-            st.write(f"### Current Temperature: {temp_1:.2f} °C")
+            st.metric("Current Value", f"{temp_1:.2f} °C")
         with tab3:
-            st.write(f"### Current Temperature: {temp_2:.2f} °C")
+            st.metric("Current Value", f"{temp_2:.2f} °C")
 
         # Wait for 1 second to simulate real-time updates
         time.sleep(1)
