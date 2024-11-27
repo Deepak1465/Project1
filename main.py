@@ -49,8 +49,9 @@ def plot_real_time_temperatures(file_path):
     time_points = []
     temp_0_points, temp_1_points, temp_2_points = [], [], []
 
-    # Placeholder for the plot
+    # Placeholder for the plot and metrics
     plot_placeholder = st.empty()
+    temp_display_placeholder = st.container()
 
     # Real-time plotting loop
     for index, row in data.iterrows():
@@ -78,15 +79,6 @@ def plot_real_time_temperatures(file_path):
         plt.plot(time_points, temp_1_points, label="Temperature_1", color="blue")
         plt.plot(time_points, temp_2_points, label="Temperature_2", color="green")
 
-        # Add vertical lines for periods with no new max
-        for i in range(1, len(time_points)):
-            if temp_0_points[i] == temp_0_points[i - 1]:
-                plt.axvline(x=time_points[i], color="red", linestyle="--", alpha=0.5)
-            if temp_1_points[i] == temp_1_points[i - 1]:
-                plt.axvline(x=time_points[i], color="blue", linestyle="--", alpha=0.5)
-            if temp_2_points[i] == temp_2_points[i - 1]:
-                plt.axvline(x=time_points[i], color="green", linestyle="--", alpha=0.5)
-
         # Add plot details
         plt.title("Real-Time Maximum Temperature Plot")
         plt.xlabel("Time (seconds)")
@@ -97,6 +89,12 @@ def plot_real_time_temperatures(file_path):
         # Render the plot in Streamlit
         plot_placeholder.pyplot(plt)
         plt.close()
+
+        # Update temperature metrics in Streamlit
+        with temp_display_placeholder:
+            st.metric(label="Temperature_0", value=f"{temp_0:.2f} °C")
+            st.metric(label="Temperature_1", value=f"{temp_1:.2f} °C")
+            st.metric(label="Temperature_2", value=f"{temp_2:.2f} °C")
 
         # Wait for 1 second to simulate real-time updates
         time.sleep(1)
@@ -109,4 +107,3 @@ try:
     plot_real_time_temperatures(file_path)
 except Exception as e:
     st.error(f"An error occurred: {e}")
-
