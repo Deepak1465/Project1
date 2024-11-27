@@ -56,17 +56,22 @@ def plot_real_time_temperatures(file_path):
         temp_0, temp_1, temp_2 = row["Temperature_0"], row["Temperature_1"], row["Temperature_2"]
 
         # Create the plot
-        plt.figure(figsize=(10, 6))
-        plt.plot(data["X_Value"][:index+1], data["Temperature_0"][:index+1], label="Temperature_0", color="red")
-        plt.plot(data["X_Value"][:index+1], data["Temperature_1"][:index+1], label="Temperature_1", color="blue")
-        plt.plot(data["X_Value"][:index+1], data["Temperature_2"][:index+1], label="Temperature_2", color="green")
+        plt.figure(figsize=(8, 4))  # Smaller, minimal size
+        plt.plot(data["X_Value"][:index+1], data["Temperature_0"][:index+1], label="Temperature_0", color="red", linewidth=1.5)
+        plt.plot(data["X_Value"][:index+1], data["Temperature_1"][:index+1], label="Temperature_1", color="blue", linewidth=1.5)
+        plt.plot(data["X_Value"][:index+1], data["Temperature_2"][:index+1], label="Temperature_2", color="green", linewidth=1.5)
 
-        # Add plot details
-        plt.title("Real-Time Temperature Plot")
-        plt.xlabel("Time (seconds)")
-        plt.ylabel("Temperature (°C)")
-        plt.legend()
-        plt.grid()
+        # Add minimal plot details
+        plt.title("Temperature Trends", fontsize=14, fontweight='bold', loc='left', pad=10)
+        plt.xlabel("Time (seconds)", fontsize=12)
+        plt.ylabel("Temperature (°C)", fontsize=12)
+        plt.legend(frameon=False, fontsize=10, loc="upper left")
+        plt.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.6)
+        plt.tight_layout()  # Adjust layout to remove excess space
+
+        # Hide top and right spines
+        plt.gca().spines["top"].set_visible(False)
+        plt.gca().spines["right"].set_visible(False)
 
         # Render the plot in Streamlit
         plot_placeholder.pyplot(plt)
