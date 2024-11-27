@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib
 import matplotlib.pyplot as plt
 import time
 
@@ -37,7 +36,7 @@ def load_data(file_path):
 
 # Streamlit app for plotting maximum temperatures
 def plot_real_time_temperatures(file_path):
-    st.title("Real-Time Maximum Temperature Plot")
+    st.title("Real-Time Temperature Monitoring")
     st.write(f"Reading temperature data from: `{file_path}`")
 
     # Load the data
@@ -45,33 +44,26 @@ def plot_real_time_temperatures(file_path):
     data["X_Value"] = data["X_Value"].cumsum()  # Ensure X_Value increments by 1 second
 
     # Initialize variables
-    max_temp_0, max_temp_1, max_temp_2 = float('-inf'), float('-inf'), float('-inf')
     time_points = []
     temp_0_points, temp_1_points, temp_2_points = [], [], []
 
-    # Placeholder for the plot and columns for temperature display
+    # Placeholder for the plot and metrics
     plot_placeholder = st.empty()
+
+    # Create three columns for temperature metrics
     col1, col2, col3 = st.columns(3)
 
     # Real-time plotting loop
     for index, row in data.iterrows():
-        # Update maximum temperatures
+        # Get the current time and temperatures
         current_time = row["X_Value"]
         temp_0, temp_1, temp_2 = row["Temperature_0"], row["Temperature_1"], row["Temperature_2"]
 
-        # For each temperature column, update if a new max is reached or add a vertical line
-        if temp_0 > max_temp_0:
-            max_temp_0 = temp_0
-        if temp_1 > max_temp_1:
-            max_temp_1 = temp_1
-        if temp_2 > max_temp_2:
-            max_temp_2 = temp_2
-
         # Add points for plotting
         time_points.append(current_time)
-        temp_0_points.append(max_temp_0)
-        temp_1_points.append(max_temp_1)
-        temp_2_points.append(max_temp_2)
+        temp_0_points.append(temp_0)
+        temp_1_points.append(temp_1)
+        temp_2_points.append(temp_2)
 
         # Create the plot
         plt.figure(figsize=(10, 6))
@@ -80,7 +72,7 @@ def plot_real_time_temperatures(file_path):
         plt.plot(time_points, temp_2_points, label="Temperature_2", color="green")
 
         # Add plot details
-        plt.title("Real-Time Maximum Temperature Plot")
+        plt.title("Real-Time Temperature Plot")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Temperature (°C)")
         plt.legend()
@@ -91,17 +83,9 @@ def plot_real_time_temperatures(file_path):
         plt.close()
 
         # Update temperature metrics in columns
-        with col1:
-            st.markdown("### Temperature_0")
-            st.metric(label="", value=f"{temp_0:.2f} °C")
-        
-        with col2:
-            st.markdown("### Temperature_1")
-            st.metric(label="", value=f"{temp_1:.2f} °C")
-        
-        with col3:
-            st.markdown("### Temperature_2")
-            st.metric(label="", value=f"{temp_2:.2f} °C")
+        col1.metric("Temperature_0", f"{temp_0:.2f} °C")
+        col2.metric("Temperature_1", f"{temp_1:.2f} °C")
+        col3.metric("Temperature_2", f"{temp_2:.2f} °C")
 
         # Wait for 1 second to simulate real-time updates
         time.sleep(1)
