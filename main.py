@@ -34,7 +34,7 @@ def load_data(file_path):
 
     return data
 
-# Streamlit app for plotting and displaying temperatures
+# Streamlit app for plotting and displaying current temperatures
 def plot_real_time_temperatures(file_path):
     st.title("Real-Time Temperature Monitoring")
     st.write(f"Reading temperature data from: `{file_path}`")
@@ -42,10 +42,6 @@ def plot_real_time_temperatures(file_path):
     # Load the data
     data = load_data(file_path)
     data["X_Value"] = data["X_Value"].cumsum()  # Ensure X_Value increments by 1 second
-
-    # Initialize variables
-    time_points = []
-    temp_0_points, temp_1_points, temp_2_points = [], [], []
 
     # Placeholder for the plot
     plot_placeholder = st.empty()
@@ -59,17 +55,11 @@ def plot_real_time_temperatures(file_path):
         current_time = row["X_Value"]
         temp_0, temp_1, temp_2 = row["Temperature_0"], row["Temperature_1"], row["Temperature_2"]
 
-        # Add points for plotting
-        time_points.append(current_time)
-        temp_0_points.append(temp_0)
-        temp_1_points.append(temp_1)
-        temp_2_points.append(temp_2)
-
         # Create the plot
         plt.figure(figsize=(10, 6))
-        plt.plot(time_points, temp_0_points, label="Temperature_0", color="red")
-        plt.plot(time_points, temp_1_points, label="Temperature_1", color="blue")
-        plt.plot(time_points, temp_2_points, label="Temperature_2", color="green")
+        plt.plot(data["X_Value"][:index+1], data["Temperature_0"][:index+1], label="Temperature_0", color="red")
+        plt.plot(data["X_Value"][:index+1], data["Temperature_1"][:index+1], label="Temperature_1", color="blue")
+        plt.plot(data["X_Value"][:index+1], data["Temperature_2"][:index+1], label="Temperature_2", color="green")
 
         # Add plot details
         plt.title("Real-Time Temperature Plot")
