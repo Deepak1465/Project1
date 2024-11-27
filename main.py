@@ -34,7 +34,7 @@ def load_data(file_path):
 
     return data
 
-# Streamlit app for plotting and displaying temperatures in tabs
+# Streamlit app for plotting and displaying temperatures
 def plot_real_time_temperatures(file_path):
     st.title("Real-Time Temperature Monitoring")
     st.write(f"Reading temperature data from: `{file_path}`")
@@ -50,8 +50,8 @@ def plot_real_time_temperatures(file_path):
     # Placeholder for the plot
     plot_placeholder = st.empty()
 
-    # Create tabs for displaying temperatures
-    tab1, tab2, tab3 = st.tabs(["Temperature_0", "Temperature_1", "Temperature_2"])
+    # Create three columns for displaying temperatures
+    col1, col2, col3 = st.columns(3)
 
     # Real-time plotting loop
     for index, row in data.iterrows():
@@ -82,13 +82,10 @@ def plot_real_time_temperatures(file_path):
         plot_placeholder.pyplot(plt)
         plt.close()
 
-        # Update temperature metrics in tabs
-        with tab1:
-            st.metric("Current Temperature", f"{temp_0:.2f} °C")
-        with tab2:
-            st.metric("Current Temperature", f"{temp_1:.2f} °C")
-        with tab3:
-            st.metric("Current Temperature", f"{temp_2:.2f} °C")
+        # Update current temperatures in the three columns
+        col1.metric("Temperature_0", f"{temp_0:.2f} °C")
+        col2.metric("Temperature_1", f"{temp_1:.2f} °C")
+        col3.metric("Temperature_2", f"{temp_2:.2f} °C")
 
         # Wait for 1 second to simulate real-time updates
         time.sleep(1)
