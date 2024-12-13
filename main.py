@@ -5,33 +5,37 @@ import time
 
 # Define a function to load data after the "***End_of_Header***" marker
 def load_data(file_path):
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
 
-    # Find the actual start of the data
-    header_marker = "***End_of_Header***"
-    data_start_line = next(i for i, line in enumerate(lines) if header_marker in line) + 1
+        # Find the actual start of the data
+        header_marker = "***End_of_Header***"
+        data_start_line = next(i for i, line in enumerate(lines) if header_marker in line) + 1
 
-    for i, line in enumerate(lines[data_start_line:]):
-        if "X_Value" in line:
-            actual_data_start = data_start_line + i + 1
-            break
+        for i, line in enumerate(lines[data_start_line:]):
+            if "X_Value" in line:
+                actual_data_start = data_start_line + i + 1
+                break
 
-    # Load data into a DataFrame
-    data = pd.read_csv(
-        file_path,
-        sep="\t",
-        skiprows=actual_data_start - 1,
-        names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"]
-    )
+        # Load data into a DataFrame
+        data = pd.read_csv(
+            file_path,
+            sep="\t",
+            skiprows=actual_data_start - 1,
+            names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"]
+        )
 
-    # Convert columns to numeric, replacing invalid values with NaN
-    data = data.apply(pd.to_numeric, errors='coerce')
+        # Convert columns to numeric, replacing invalid values with NaN
+        data = data.apply(pd.to_numeric, errors='coerce')
 
-    # Drop rows with NaN values
-    data.dropna(inplace=True)
+        # Drop rows with NaN values
+        data.dropna(inplace=True)
 
-    return data
+        return data
+    except Exception as e:
+        st.error(f"Failed to load data: {e}")
+        return pd.DataFrame()  # Return an empty DataFrame to handle errors gracefully
 
 # Streamlit app for plotting temperatures
 def plot_real_time_temperatures(file_path):
@@ -40,6 +44,10 @@ def plot_real_time_temperatures(file_path):
 
     # Load the data
     data = load_data(file_path)
+    if data.empty:
+        st.error("No data available to plot.")
+        return
+
     data["X_Value"] = data["X_Value"].cumsum()  # Simulate time increment
 
     # Initialize plot placeholder
