@@ -3,7 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import time
 
-# Define a function to load data after the "***End_of_Header***" marker
 def load_data(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -22,7 +21,7 @@ def load_data(file_path):
         file_path,
         sep="\t",
         skiprows=actual_data_start - 1,
-        names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2", "Comment"],
+        names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"],
         usecols=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"]
     )
 
@@ -34,7 +33,6 @@ def load_data(file_path):
 
     return data
 
-# Streamlit app for plotting and displaying temperatures in tabs
 def plot_real_time_temperatures(file_path):
     st.title("Real-Time Temperature Monitoring")
     st.write(f"Reading temperature data from: `{file_path}`")
@@ -43,19 +41,15 @@ def plot_real_time_temperatures(file_path):
     data = load_data(file_path)
     data["X_Value"] = data["X_Value"].cumsum()  # Ensure X_Value increments by 1 second
 
-    # Initialize variables
+    # Initialize variables for plotting
     time_points = []
     temp_0_points, temp_1_points, temp_2_points = [], [], []
 
     # Placeholder for the plot
     plot_placeholder = st.empty()
 
-    # Create tabs for displaying temperatures
-    tab1, tab2, tab3 = st.tabs(["Temperature_0", "Temperature_1", "Temperature_2"])
-
     # Real-time plotting loop
     for index, row in data.iterrows():
-        # Get the current time and temperatures
         current_time = row["X_Value"]
         temp_0, temp_1, temp_2 = row["Temperature_0"], row["Temperature_1"], row["Temperature_2"]
 
@@ -67,11 +61,11 @@ def plot_real_time_temperatures(file_path):
 
         # Create the plot
         plt.figure(figsize=(10, 6))
-        plt.plot(time_points, temp_0_points, label="Temperature_0", color="red")
-        plt.plot(time_points, temp_1_points, label="Temperature_1", color="blue")
-        plt.plot(time_points, temp_2_points, label="Temperature_2", color="green")
+        plt.plot(time_points, temp_0_points, label="Temperature 0", color="red")
+        plt.plot(time_points, temp_1_points, label="Temperature 1", color="blue")
+        plt.plot(time_points, temp_2_points, label="Temperature 2", color="green")
 
-        # Add plot details
+        # Set plot details
         plt.title("Real-Time Temperature Plot")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Temperature (°C)")
@@ -82,15 +76,7 @@ def plot_real_time_temperatures(file_path):
         plot_placeholder.pyplot(plt)
         plt.close()
 
-        # Update temperature metrics in tabs
-        with tab1:
-            st.metric("Current Value", f"{temp_0:.2f} °C")
-        with tab2:
-            st.metric("Current Value", f"{temp_1:.2f} °C")
-        with tab3:
-            st.metric("Current Value", f"{temp_2:.2f} °C")
-
-        # Wait for 1 second to simulate real-time updates
+        # Simulate real-time updates
         time.sleep(1)
 
 # File path for the .lvm file
