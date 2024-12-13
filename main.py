@@ -11,6 +11,7 @@ def load_data(file_path):
     # Find the actual start of the data
     header_marker = "***End_of_Header***"
     data_start_line = next(i for i, line in enumerate(lines) if header_marker in line) + 1
+
     for i, line in enumerate(lines[data_start_line:]):
         if "X_Value" in line:
             actual_data_start = data_start_line + i + 1
@@ -21,7 +22,8 @@ def load_data(file_path):
         file_path,
         sep="\t",
         skiprows=actual_data_start - 1,
-        names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"]
+        names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2", "Comment"],
+        usecols=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"]
     )
 
     # Convert columns to numeric, replacing invalid values with NaN
@@ -32,7 +34,7 @@ def load_data(file_path):
 
     return data
 
-# Streamlit app for plotting temperatures
+# Streamlit app for plotting and displaying temperatures in tabs
 def plot_real_time_temperatures(file_path):
     st.title("Real-Time Temperature Monitoring")
     st.write(f"Reading temperature data from: `{file_path}`")
@@ -47,6 +49,9 @@ def plot_real_time_temperatures(file_path):
 
     # Placeholder for the plot
     plot_placeholder = st.empty()
+
+    # Create tabs for displaying temperatures
+    tab1, tab2, tab3 = st.tabs(["Temperature_0", "Temperature_1", "Temperature_2"])
 
     # Real-time plotting loop
     for index, row in data.iterrows():
@@ -66,15 +71,24 @@ def plot_real_time_temperatures(file_path):
         plt.plot(time_points, temp_1_points, label="Temperature_1", color="blue")
         plt.plot(time_points, temp_2_points, label="Temperature_2", color="green")
 
-        # Simplify plot details
+        # Add plot details
         plt.title("Real-Time Temperature Plot")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Temperature (°C)")
         plt.legend()
+        plt.grid()
 
         # Render the plot in Streamlit
         plot_placeholder.pyplot(plt)
         plt.close()
+
+        # Update temperature metrics in tabs
+        with tab1:
+            st.metric("Current Value", f"{temp_0:.2f} °C")
+        with tab2:
+            st.metric("Current Value", f"{temp_1:.2f} °C")
+        with tab3:
+            st.metric("Current Value", f"{temp_2:.2f} °C")
 
         # Wait for 1 second to simulate real-time updates
         time.sleep(1)
