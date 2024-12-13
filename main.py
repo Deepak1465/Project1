@@ -22,8 +22,7 @@ def load_data(file_path):
         file_path,
         sep="\t",
         skiprows=actual_data_start - 1,
-        names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2", "Comment"],
-        usecols=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"]
+        names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"]
     )
 
     # Convert columns to numeric, replacing invalid values with NaN
@@ -34,32 +33,31 @@ def load_data(file_path):
 
     return data
 
-# Streamlit app for plotting and displaying temperatures in tabs
+# Streamlit app for plotting temperatures
 def plot_real_time_temperatures(file_path):
     st.title("Real-Time Temperature Monitoring")
     st.write(f"Reading temperature data from: `{file_path}`")
 
     # Load the data
     data = load_data(file_path)
-    data["X_Value"] = data["X_Value"].cumsum()  # Ensure X_Value increments by 1 second
+    data["X_Value"] = data["X_Value"].cumsum()  # Simulate time increment
 
-    # Initialize variables
+    # Initialize plot placeholder
+    plot_placeholder = st.empty()
+    
+    # Create a container for metrics
+    metrics_container = st.container()
+
+    # Initialize lists to hold the data points for plotting
     time_points = []
     temp_0_points, temp_1_points, temp_2_points = [], [], []
-
-    # Placeholder for the plot
-    plot_placeholder = st.empty()
-
-    # Create tabs for displaying temperatures
-    tab1, tab2, tab3 = st.tabs(["Temperature_0", "Temperature_1", "Temperature_2"])
+    last_temp_0, last_temp_1, last_temp_2 = 0, 0, 0  # Initialize last temperature values for delta calculation
 
     # Real-time plotting loop
     for index, row in data.iterrows():
-        # Get the current time and temperatures
+        # Append new data points to the lists
         current_time = row["X_Value"]
         temp_0, temp_1, temp_2 = row["Temperature_0"], row["Temperature_1"], row["Temperature_2"]
-
-        # Add points for plotting
         time_points.append(current_time)
         temp_0_points.append(temp_0)
         temp_1_points.append(temp_1)
@@ -67,28 +65,24 @@ def plot_real_time_temperatures(file_path):
 
         # Create the plot
         plt.figure(figsize=(10, 6))
-        plt.plot(time_points, temp_0_points, label="Temperature_0", color="red")
-        plt.plot(time_points, temp_1_points, label="Temperature_1", color="blue")
-        plt.plot(time_points, temp_2_points, label="Temperature_2", color="green")
-
-        # Add plot details
+        plt.plot(time_points, temp_0_points, label="Temperature 0", color="red")
+        plt.plot(time_points, temp_1_points, label="Temperature 1", color="blue")
+        plt.plot(time_points, temp_2_points, label="Temperature 2", color="green")
         plt.title("Real-Time Temperature Plot")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Temperature (°C)")
         plt.legend()
-        plt.grid()
 
-        # Render the plot in Streamlit
+        # Display the plot in Streamlit
         plot_placeholder.pyplot(plt)
         plt.close()
 
-        # Update temperature metrics in tabs
-        with tab1:
-            st.metric("Current Value", f"{temp_0:.2f} °C")
-        with tab2:
-            st.metric("Current Value", f"{temp_1:.2f} °C")
-        with tab3:
-            st.metric("Current Value", f"{temp_2:.2f} °C")
+        # Display metrics
+        with metrics_container:
+            st.metric(label="Temperature 0", value=f"{temp_0:.2f} °C", delta=f"{temp_0 - last_temp_0:.2f} °C")
+            st.metric(label="Temperature 1", value=f"{temp_1:.2f} °C", delta=f"{temp_1 - last_temp_1:.2f} °C")
+            st.metric(label="Temperature 2", value=f"{temp_2:.2f} °C", delta=f"{temp_2 - last_temp_2:.2f} °C")
+        last_temp_0, last_temp_1, last_temp_2 = temp_0, temp_1, temp_2  # Update last temperatures
 
         # Wait for 1 second to simulate real-time updates
         time.sleep(1)
