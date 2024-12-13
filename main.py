@@ -1,47 +1,100 @@
-# path_to_your_script.py
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
 
-def tail_file(file_path):
-    """Yield new lines added to file."""
-    with open(file_path, 'r') as file:
-        file.seek(0, 2)
-        while True:
-            line = file.readline()
-            if not line:
-                time.sleep(0.1)
-                continue
-            yield line
-
 def load_data(file_path):
-    """Stream data from the file."""
-    for line in tail_file(file_path):
-        if line.strip():
-            try:
-                data = pd.read_csv(io.StringIO(line), sep="\t",
-                                   names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"],
-                                   usecols=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"])
-                data = data.apply(pd.to_numeric, errors='coerce').dropna()
-                if not data.empty:
-                    yield data
-            except Exception as e:
-                st.error(f"Error processing data: {e}")
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
 
-def main():
-    st.title("Real-Time Data Streaming Check")
-    file_path = './exp12.lvm'  # Update to your file path
-    for new_data in load_data(file_path):
-        st.write(new_data)
-        plt.figure()
-        plt.plot(new_data['X_Value'], new_data['Temperature_0'], label='Temp 0')
-        plt.plot(new_data['X_Value'], new_data['Temperature_1'], label='Temp 1')
-        plt.plot(new_data['X_Value'], new_data['Temperature_2'], label='Temp 2')
+    # Find the actual start of the data
+    header_marker = "***End_of_Header***"
+    data_start_line = next(i for i, line in enumerate(lines) if header_marker in line) + 1
+
+    for i, line in enumerate(lines[data_start_line:]):
+        if "X_Value" in line:
+            actual_data_start = data_start_line + i + 1
+            break
+
+    # Load data into a DataFrame
+    data = pd.read_csv(
+        file_path,
+        sep="\t",
+        skiprows=actual_data_start - 1,
+        names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"],
+        usecols=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"]
+    )
+
+    # Convert columns to numeric, replacing invalid values with NaN
+    data = data.apply(pd.to_numeric, errors='coerce')
+
+    # Drop rows with NaN values
+    data.dropna(inplace=True)
+
+    return data
+
+def plot_real_time_temperatures(file_path):
+    st.title("Real-Time Temperature Monitoring")
+    st.write(f"Reading temperature data from: `{file_path}`")
+
+    # Load the data
+    data = load_data(file_path)
+    data["X_Value"] = data["X_Value"].cumsum()  # Ensure X_Value increments by 1 second
+
+    # Initialize variables for plotting
+    time_points = []
+    temp_0_points, temp_1_points, temp_2_points = [], [], []
+
+    # Placeholder for the plot
+    plot_placeholder = st.empty()
+
+    # Create tabs for displaying temperatures
+    tab1, tab2, tab3 = st.tabs(["Temperature 0", "Temperature 1", "Temperature 2"])
+    temp_0_display = tab1.empty()
+    temp_1_display = tab2.empty()
+    temp_2_display = tab3.empty()
+
+    # Real-time plotting loop
+    for index, row in data.iterrows():
+        current_time = row["X_Value"]
+        temp_0, temp_1, temp_2 = row["Temperature_0"], row["Temperature_1"], row["Temperature_2"]
+
+        # Add points for plotting
+        time_points.append(current_time)
+        temp_0_points.append(temp_0)
+        temp_1_points.append(temp_1)
+        temp_2_points.append(temp_2)
+
+        # Create the plot
+        plt.figure(figsize=(10, 6))
+        plt.plot(time_points, temp_0_points, label="Temperature 0", color="red")
+        plt.plot(time_points, temp_1_points, label="Temperature 1", color="blue")
+        plt.plot(time_points, temp_2_points, label="Temperature 2", color="green")
+
+        # Set plot details
+        plt.title("Real-Time Temperature Plot")
+        plt.xlabel("Time (seconds)")
+        plt.ylabel("Temperature (°C)")
         plt.legend()
-        plt.xlabel('Time')
-        plt.ylabel('Temperature')
-        st.pyplot(plt)
+        plt.grid()
 
-if __name__ == "__main__":
-    main()
+        # Render the plot in Streamlit
+        plot_placeholder.pyplot(plt)
+        plt.close()
+
+        # Update current temperature in tabs
+        temp_0_display.metric("Current Temperature 0", f"{temp_0:.2f} °C")
+        temp_1_display.metric("Current Temperature 1", f"{temp_1:.2f} °C")
+        temp_2_display.metric("Current Temperature 2", f"{temp_2:.2f} °C")
+
+        # Simulate real-time updates
+        time.sleep(1)
+
+# File path for the .lvm file
+file_path = './exp12.lvm'
+
+# Run the app
+try:
+    plot_real_time_temperatures(file_path)
+except Exception as e:
+    st.error(f"An error occurred: {e}")
