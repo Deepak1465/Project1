@@ -48,6 +48,12 @@ def plot_real_time_temperatures(file_path):
     # Placeholder for the plot
     plot_placeholder = st.empty()
 
+    # Create tabs for displaying temperatures
+    tab1, tab2, tab3 = st.tabs(["Temperature 0", "Temperature 1", "Temperature 2"])
+    temp_0_display = tab1.empty()
+    temp_1_display = tab2.empty()
+    temp_2_display = tab3.empty()
+
     # Real-time plotting loop
     for index, row in data.iterrows():
         current_time = row["X_Value"]
@@ -75,6 +81,11 @@ def plot_real_time_temperatures(file_path):
         # Render the plot in Streamlit
         plot_placeholder.pyplot(plt)
         plt.close()
+
+        # Update current temperature in tabs
+        temp_0_display.metric("Current Temperature 0", f"{temp_0:.2f} °C")
+        temp_1_display.metric("Current Temperature 1", f"{temp_1:.2f} °C")
+        temp_2_display.metric("Current Temperature 2", f"{temp_2:.2f} °C")
 
         # Simulate real-time updates
         time.sleep(1)
