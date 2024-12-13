@@ -2,11 +2,13 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
+import io
 
 def tail_file(file_path):
     """Generator function that yields new lines in a file."""
     with open(file_path, 'r') as file:
-        file.seek(0, 2)  # Move the cursor to the end of the file
+        # Move the cursor to the end of the file initially
+        file.seek(0, 2)
         while True:
             line = file.readline()
             if not line:
@@ -14,29 +16,31 @@ def tail_file(file_path):
                 continue
             yield line
 
-def load_data(file_path, skip_rows):
+def load_data(file_path):
     """Load only new data from the file."""
     for line in tail_file(file_path):
         if line.strip():  # This checks if the line is not just a newline
             # Create a DataFrame from a single line
-            data = pd.read_csv(pd.io.common.StringIO(line), sep="\t",
-                               names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"],
-                               usecols=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"])
-            data = data.apply(pd.to_numeric, errors='coerce').dropna()
-            if not data.empty:
-                yield data
+            try:
+                data = pd.read_csv(io.StringIO(line), sep="\t",
+                                   names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"],
+                                   usecols=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"])
+                data = data.apply(pd.to_numeric, errors='coerce').dropna()
+                if not data.empty:
+                    yield data
+            except Exception as e:
+                st.error(f"Error processing data: {e}")
 
 def plot_real_time_temperatures(file_path):
     st.title("Real-Time Temperature Monitoring")
     st.write("Reading temperature data...")
 
     plot_placeholder = st.empty()
-    initial_skip = True
 
     time_points = []
     temp_0_points, temp_1_points, temp_2_points = [], [], []
 
-    for new_data in load_data(file_path, skip_initial_headers=True):
+    for new_data in load_data(file_path):
         for index, row in new_data.iterrows():
             current_time = row["X_Value"]
             temp_0, temp_1, temp_2 = row["Temperature_0"], row["Temperature_1"], row["Temperature_2"]
