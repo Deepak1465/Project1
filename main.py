@@ -12,6 +12,7 @@ def load_data(file_path):
     header_marker = "***End_of_Header***"
     data_start_line = next(i for i, line in enumerate(lines) if header_marker in line) + 1
 
+    # Find the start of the actual data after the header
     for i, line in enumerate(lines[data_start_line:]):
         if "X_Value" in line:
             actual_data_start = data_start_line + i + 1
@@ -22,8 +23,7 @@ def load_data(file_path):
         file_path,
         sep="\t",
         skiprows=actual_data_start - 1,
-        names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2", "Comment"],
-        usecols=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"]
+        names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"]
     )
 
     # Convert columns to numeric, replacing invalid values with NaN
@@ -34,63 +34,48 @@ def load_data(file_path):
 
     return data
 
-# Streamlit app for plotting and displaying temperatures in tabs
+# Streamlit app for plotting temperatures
 def plot_real_time_temperatures(file_path):
     st.title("Real-Time Temperature Monitoring")
     st.write(f"Reading temperature data from: `{file_path}`")
 
     # Load the data
     data = load_data(file_path)
-    data["X_Value"] = data["X_Value"].cumsum()  # Ensure X_Value increments by 1 second
+    data["X_Value"] = data["X_Value"].cumsum()  # Simulate time increment
 
-    # Initialize variables
+    # Initialize plot placeholder
+    plot_placeholder = st.empty()
+
+    # Initialize lists to hold the data points for plotting
     time_points = []
     temp_0_points, temp_1_points, temp_2_points = [], [], []
 
-    # Placeholder for the plot
-    plot_placeholder = st.empty()
-
-    # Create tabs for displaying temperatures
-    tab1, tab2, tab3 = st.tabs(["Temperature_0", "Temperature_1", "Temperature_2"])
-
     # Real-time plotting loop
     for index, row in data.iterrows():
-        # Get the current time and temperatures
-        current_time = row["X_Value"]
-        temp_0, temp_1, temp_2 = row["Temperature_0"], row["Temperature_1"], row["Temperature_2"]
+        # Append new data points to the lists
+        time_points.append(row["X_Value"])
+        temp_0_points.append(row["Temperature_0"])
+        temp_1_points.append(row["Temperature_1"])
+        temp_2_points.append(row["Temperature_2"])
 
-        # Add points for plotting
-        time_points.append(current_time)
-        temp_0_points.append(temp_0)
-        temp_1_points.append(temp_1)
-        temp_2_points.append(temp_2)
+        # Clear the previous figure to avoid memory overflow
+        plt.clf()
 
         # Create the plot
         plt.figure(figsize=(10, 6))
         plt.plot(time_points, temp_0_points, label="Temperature_0", color="red")
         plt.plot(time_points, temp_1_points, label="Temperature_1", color="blue")
         plt.plot(time_points, temp_2_points, label="Temperature_2", color="green")
-
-        # Add plot details
         plt.title("Real-Time Temperature Plot")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Temperature (°C)")
         plt.legend()
-        plt.grid()
+        plt.tight_layout()
 
-        # Render the plot in Streamlit
+        # Display the plot in the Streamlit app
         plot_placeholder.pyplot(plt)
-        plt.close()
 
-        # Update temperature metrics in tabs
-        with tab1:
-            st.metric("Current Value", f"{temp_0:.2f} °C")
-        with tab2:
-            st.metric("Current Value", f"{temp_1:.2f} °C")
-        with tab3:
-            st.metric("Current Value", f"{temp_2:.2f} °C")
-
-        # Wait for 1 second to simulate real-time updates
+        # Simulate real-time update delay
         time.sleep(1)
 
 # File path for the .lvm file
