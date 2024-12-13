@@ -7,20 +7,18 @@ import io
 def tail_file(file_path):
     """Generator function that yields new lines in a file."""
     with open(file_path, 'r') as file:
-        # Move the cursor to the end of the file initially
-        file.seek(0, 2)
+        file.seek(0, 2)  # Go to the end of the file
         while True:
             line = file.readline()
             if not line:
-                time.sleep(0.1)  # Sleep briefly to avoid busy waiting
+                time.sleep(0.1)  # Sleep briefly
                 continue
             yield line
 
 def load_data(file_path):
     """Load only new data from the file."""
     for line in tail_file(file_path):
-        if line.strip():  # This checks if the line is not just a newline
-            # Create a DataFrame from a single line
+        if line.strip():  # Check if the line is not just a newline
             try:
                 data = pd.read_csv(io.StringIO(line), sep="\t",
                                    names=["X_Value", "Temperature_0", "Temperature_1", "Temperature_2"],
@@ -28,8 +26,12 @@ def load_data(file_path):
                 data = data.apply(pd.to_numeric, errors='coerce').dropna()
                 if not data.empty:
                     yield data
+                else:
+                    st.write("Received empty or invalid data.")
             except Exception as e:
                 st.error(f"Error processing data: {e}")
+            finally:
+                st.write(f"Processed line: {line}")  # Debugging output
 
 def plot_real_time_temperatures(file_path):
     st.title("Real-Time Temperature Monitoring")
@@ -63,9 +65,9 @@ def plot_real_time_temperatures(file_path):
             plot_placeholder.pyplot(plt)
             plt.close()
 
-            time.sleep(1)  # Update rate might be adjusted based on actual data rate
+            time.sleep(1)  # This could be adjusted or removed based on how often data is updated
 
-file_path = './exp12.lvm'  # Ensure this is the correct path to your continuously updating file
+file_path = './exp12.lvm'  # Update this path if necessary
 
 # Run the app
 try:
